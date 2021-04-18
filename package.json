@@ -9,6 +9,7 @@
   "author": "Ari Siitonen@rt0s.com",
   "license": "ISC",
   "dependencies": {
-    "mqtt": "^4.2.6"
+    "mqtt": "^4.2.6",
+    "mqtt-match": "^2.0.3"
   }
 }
