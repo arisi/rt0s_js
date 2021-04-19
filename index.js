@@ -3,8 +3,6 @@ var mqtt = require('mqtt')
 const match = require('mqtt-match');
 
 class MQTTapi {
-  sublist = {};
-  apis = {};
 
   static stamp() {
     return (new Date).getTime();
@@ -45,6 +43,8 @@ class MQTTapi {
   constructor(url, id) {
     var ctx = this;
     this._id = id;
+    this.sublist = {};
+    this.apis = {};
 
     var _client = mqtt.connect(url, {
       will: {
