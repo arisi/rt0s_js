@@ -11,7 +11,7 @@ function sleep (time) {
 }
 
 sleep(500).then(() => {
-  mq.req("numnet", ["ping"], {}, (err,ret) => { 
+  mq.req("numnet", ["get","0400503772","x"], {}, (err,ret) => { 
     console.log("got reply",err,ret);
   })
   mq.req("numnetx", ["ping"], {} , (err,ret) => { 

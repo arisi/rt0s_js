@@ -10,16 +10,15 @@ class MQTTapi {
 
   broadcast(path, obj, options = {}) {
     try {
-      this._client.publish(`/bc/${this._id}/${path}`, JSON.stringify(obj), options);      
+      this._client.publish(`/bc/${this._id}/${path}`, JSON.stringify(obj), options);
     } catch (error) {
       console.error("ERR broadcast:", error);
     }
   }
-  
+
   publish(path, obj, options = {}) {
-    //console.log(">>",path, obj);
     try {
-      this._client.publish(path, JSON.stringify(obj), options);      
+      this._client.publish(path, JSON.stringify(obj), options);
     } catch (error) {
       console.error("ERR publish:", error);
     }
@@ -32,16 +31,14 @@ class MQTTapi {
       } else {
         this.sublist[topic] = cb;
       }
-      console.log(this.sublist);
-      
     }.bind(this))
   }
 
   registerAPI(path, cb) {
-    this.apis[path] = {"f": cb};
+    this.apis[path] = { "f": cb };
   }
 
-  req(target, msg, options, cb ) {
+  req(target, msg, options, cb) {
     var obj = {
       'mid': uuid.v4(),
       'src': this._id,
@@ -58,11 +55,10 @@ class MQTTapi {
       'retries': "retries" in options ? options.tries : 5,
       'timeout': "timeout" in options ? options.timeout : 3000
     };
-    console.log("reqs", this.reqs);
     this.publish(`/dn/${target}/${obj['mid']}`, obj);
   }
-  
-  constructor(url, id ,uid, pw) {
+
+  constructor(url, id, uid, pw) {
     var ctx = this;
     this._id = id;
     this.sublist = {};
@@ -71,29 +67,29 @@ class MQTTapi {
 
     var _client = mqtt.connect(url, {
       will: {
-      topic: `/bc/${this._id}/state`,
-      payload: '{"state": "off"}',
-      qos: 2,
-      retain: true
+        topic: `/bc/${this._id}/state`,
+        payload: '{"state": "off"}',
+        qos: 2,
+        retain: true
       },
       username: uid,
       password: pw,
-      clientId:id
+      clientId: id
     });
-    
+
     this._client = _client;
-    this._client.on('connect', function () {
-      ctx.broadcast("state", { "state": "online", "stamp": MQTTapi.stamp() }, { retain: true,qos:2 });
+    this._client.on('connect', function() {
+      ctx.broadcast("state", { "state": "online", "stamp": MQTTapi.stamp() }, { retain: true, qos: 2 });
     })
-       
-    _client.on('message', function (topic, msg) {
+
+    _client.on('message', function(topic, msg) {
       Object.keys(this.sublist).forEach(sub => {
         if (match(sub, topic)) {
           try {
-            var obj=JSON.parse(msg.toString())
-            this.sublist[sub](topic,obj);
+            var obj = JSON.parse(msg.toString())
+            this.sublist[sub](topic, obj);
           } catch (error) {
-            console.error("got bad obj",msg.toString(),error);
+            console.error("got bad obj", msg.toString(), error);
           }
         }
       });
@@ -105,7 +101,6 @@ class MQTTapi {
 
 
     this.subscribe(`/up/${this._id}/#`, (topic, obj) => {
-      //console.log("got reply", topic, obj);
       if (obj['mid'] in this.reqs) {
         var r = this.reqs[obj['mid']]
         r.done = true;
@@ -114,10 +109,9 @@ class MQTTapi {
       }
     })
     this.subscribe(`/dn/${this._id}/#`, (topic, msg) => {
-      //console.log("got <<",topic, msg);
       if (msg['req']['args'][0] in this.apis) {
         var api = this.apis[msg['req']['args'][0]];
-        
+
         var reply = api['f'](msg);
         if (reply == null) {
           console.log("api will reply later");
@@ -139,18 +133,17 @@ class MQTTapi {
       return;
     });
 
-    this.registerAPI("ping", (msg) => { 
-      return {"pong": true};
+    this.registerAPI("ping", (msg) => {
+      return { "pong": true };
     })
     setInterval(() => {
-      for (var k in this.reqs) { 
+      for (var k in this.reqs) {
         var r = this.reqs[k]
         const now = MQTTapi.stamp()
         if (r.done)
           delete this.reqs[k]
         else if (now > r.sent + r.timeout) {
           if (r.retries > r.tries) {
-            console.log("retry");
             r.tries += 1;
             r.obj.resend = r.tries
             this.publish(`/dn/${r.target}/${r['mid']}`, r.obj);
