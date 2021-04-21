@@ -62,7 +62,7 @@ class MQTTapi {
     this.publish(`/dn/${target}/${obj['mid']}`, obj);
   }
   
-  constructor(url, id) {
+  constructor(url, id ,uid, pw) {
     var ctx = this;
     this._id = id;
     this.sublist = {};
@@ -76,6 +76,9 @@ class MQTTapi {
       qos: 2,
       retain: true
       },
+      username: uid,
+      password: pw,
+      clientId:id
     });
     
     this._client = _client;

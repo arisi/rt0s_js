@@ -1,6 +1,6 @@
 var rt0s = require('./index.js');
 
-mq = new rt0s('mqtt://mqtt.rt0s.com', 'libtester');
+mq = new rt0s('mqtt://mqtt.rt0s.com', 'libtester', "demo", "demo");
 
 mq.registerAPI("pung", (msg) => { 
   return {"pung": true};
