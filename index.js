@@ -61,9 +61,12 @@ class MQTTapi {
   constructor(url, id, uid, pw) {
     var ctx = this;
     this._id = id;
+    this.connected = false;
+    this.connected_reported = false;
     this.sublist = {};
     this.apis = {};
     this.reqs = {};
+    this.onChangeState = false;
 
     var _client = mqtt.connect(url, {
       will: {
@@ -72,14 +75,98 @@ class MQTTapi {
         qos: 2,
         retain: true
       },
+      reconnectPeriod: 1500,
       username: uid,
       password: pw,
       clientId: id
     });
 
     this._client = _client;
+
+    function sleep (time) {
+      return new Promise((resolve) => setTimeout(resolve, time));
+    }
+    
+    var do_subs = () => {
+
+      this.subscribe("/bc/+/+", (topic, msg) => {
+        //console.log("bc:", topic, msg);
+      })
+
+
+      this.subscribe(`/up/${this._id}/#`, (topic, obj) => {
+        if (obj['mid'] in this.reqs) {
+          var r = this.reqs[obj['mid']]
+          r.done = true;
+          if (r.cb)
+            r.cb(null, obj.reply)
+        }
+      })
+      this.subscribe(`/dn/${this._id}/#`, (topic, msg) => {
+        if (msg['req']['args'][0] in this.apis) {
+          var api = this.apis[msg['req']['args'][0]];
+
+          var reply = api['f'](msg);
+          if (reply == null) {
+            console.log("api will reply later");
+            return;
+          }
+          msg['reply'] = reply;
+        } else if ("*" in this.apis) {
+          var api = this.apis["*"];
+          var reply = api['f'](msg);
+          if (reply == null) {
+            return;
+          }
+          msg['reply'] = reply;
+        } else
+          msg['reply'] = {
+            "error": "no api '${msg['req']['args'][0]}' at '${this._id}'"
+          };
+        this.publish(`/up/${msg['src']}/${msg['mid']}`, msg);
+        return;
+      });
+    }
+
+    this._client.on('error', function(err) {
+      console.error("err..");
+    })
+
+    var change_state = (newstate) => {
+      if (this.connected == newstate)
+        return
+      this.connected = newstate
+      if (this.onChangeState) {
+        if (newstate) {
+          sleep(2500).then(() => {
+            if (this.connected != this.connected_reported) {
+              this.onChangeState(this.connected)
+              this.connected_reported = this.connected
+            }
+          })
+        }
+        else
+          if (this.connected != this.connected_reported) {
+            this.onChangeState(this.connected)
+            this.connected_reported = this.connected
+          }
+      }
+    }
+
+    this._client.on('disconnect', function(err) {
+      console.error("disconnected");
+      change_state(false);
+    })
+    this._client.on('offline', function(err) {
+      console.error("offline");
+      change_state(false);
+    })
+
     this._client.on('connect', function() {
+      console.log("connected!");
+      change_state(true);
       ctx.broadcast("state", { "state": "online", "stamp": MQTTapi.stamp() }, { retain: true, qos: 2 });
+      do_subs()
     })
 
     _client.on('message', function(topic, msg) {
@@ -94,44 +181,6 @@ class MQTTapi {
         }
       });
     }.bind(this))
-
-    this.subscribe("/bc/+/+", (topic, msg) => {
-      //console.log("bc:", topic, msg);
-    })
-
-
-    this.subscribe(`/up/${this._id}/#`, (topic, obj) => {
-      if (obj['mid'] in this.reqs) {
-        var r = this.reqs[obj['mid']]
-        r.done = true;
-        if (r.cb)
-          r.cb(null, obj.reply)
-      }
-    })
-    this.subscribe(`/dn/${this._id}/#`, (topic, msg) => {
-      if (msg['req']['args'][0] in this.apis) {
-        var api = this.apis[msg['req']['args'][0]];
-
-        var reply = api['f'](msg);
-        if (reply == null) {
-          console.log("api will reply later");
-          return;
-        }
-        msg['reply'] = reply;
-      } else if ("*" in this.apis) {
-        var api = this.apis["*"];
-        var reply = api['f'](msg);
-        if (reply == null) {
-          return;
-        }
-        msg['reply'] = reply;
-      } else
-        msg['reply'] = {
-          "error": "no api '${msg['req']['args'][0]}' at '${this._id}'"
-        };
-      this.publish(`/up/${msg['src']}/${msg['mid']}`, msg);
-      return;
-    });
 
     this.registerAPI("ping", (msg) => {
       return { "pong": true };
