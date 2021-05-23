@@ -134,6 +134,11 @@ class MQTTapi {
     })
 
     var change_state = (newstate) => {
+      if (this.connected == newstate && newstate==false) {
+        console.log("double off -- logout ");
+        return;
+      }
+        
       if (this.connected == newstate)
         return
       this.connected = newstate
