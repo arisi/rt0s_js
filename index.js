@@ -75,7 +75,8 @@ class MQTTapi {
         qos: 2,
         retain: true
       },
-      reconnectPeriod: 1500,
+      reconnectPeriod: 1000,
+      clean: true,
       username: uid,
       password: pw,
       clientId: id
