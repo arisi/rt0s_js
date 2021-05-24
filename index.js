@@ -60,7 +60,7 @@ class MQTTapi {
 
   end() {
     this._client.end();
-    change_state(false)
+    this.change_state(false)
   }
 
   reconnect() {
