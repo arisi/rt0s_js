@@ -60,7 +60,6 @@ class MQTTapi {
 
   end() {
     this._client.end();
-    cha
     this.change_state(false)
   }
 
