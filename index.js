@@ -59,12 +59,12 @@ class MQTTapi {
   }
 
   end() {
-    this.end();
+    this._client.end();
     change_state(false)
   }
 
   reconnect() {
-    this.reconnect();
+    this._client.reconnect();
   }
 
   constructor(url, id, uid, pw) {
