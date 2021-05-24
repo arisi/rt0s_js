@@ -60,6 +60,7 @@ class MQTTapi {
 
   end() {
     this._client.end();
+    cha
     this.change_state(false)
   }
 
@@ -142,7 +143,7 @@ class MQTTapi {
       console.error("err..");
     })
 
-    var change_state = (newstate) => {
+    var change_state = this.change_state = (newstate) => {
       if (this.connected == newstate && newstate==false) {
         console.log("double off -- logout ");
         return;
