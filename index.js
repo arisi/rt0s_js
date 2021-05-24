@@ -58,6 +58,15 @@ class MQTTapi {
     this.publish(`/dn/${target}/${obj['mid']}`, obj);
   }
 
+  end() {
+    this.end();
+    change_state(false)
+  }
+
+  reconnect() {
+    this.reconnect();
+  }
+
   constructor(url, id, uid, pw) {
     var ctx = this;
     this._id = id;
