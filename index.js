@@ -104,7 +104,7 @@ class MQTTapi {
       })
 
 
-      this.subscribe(`/up/${this._id}/#`, (topic, obj) => {
+      this.subscribe(`/up/${this._id}/+`, (topic, obj) => {
         if (obj['mid'] in this.reqs) {
           var r = this.reqs[obj['mid']]
           r.done = true;
@@ -112,7 +112,7 @@ class MQTTapi {
             r.cb(null, obj.reply)
         }
       })
-      this.subscribe(`/dn/${this._id}/#`, (topic, msg) => {
+      this.subscribe(`/dn/${this._id}/+`, (topic, msg) => {
         if (msg['req']['args'][0] in this.apis) {
           var api = this.apis[msg['req']['args'][0]];
 
@@ -210,7 +210,7 @@ class MQTTapi {
           if (r.retries > r.tries) {
             r.tries += 1;
             r.obj.resend = r.tries
-            this.publish(`/dn/${r.target}/${r['mid']}`, r.obj);
+            this.publish(`/dn/${r.obj.target}/${r.obj.mid}`, r.obj);
             r.sent = now;
           } else {
             if (r.cb)
