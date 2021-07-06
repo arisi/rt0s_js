@@ -131,7 +131,7 @@ class MQTTapi {
           msg['reply'] = reply;
         } else
           msg['reply'] = {
-            "error": "no api '${msg['req']['args'][0]}' at '${this._id}'"
+            "error": `no api '${msg['req']['args'][0]}' at '${this._id}'`
           };
         this.publish(`/up/${msg['src']}/${msg['mid']}`, msg);
         return;
