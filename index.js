@@ -211,6 +211,8 @@ class MQTTapi {
       for (var c of Object.keys(this.apis)) {
         ret.push({
           cmd: c,
+          descr: this.apis[c].descr,
+          args: this.apis[c].args,
         })
       }
       return ret;
