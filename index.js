@@ -34,8 +34,12 @@ class MQTTapi {
     }.bind(this))
   }
 
-  registerAPI(path, cb) {
-    this.apis[path] = { "f": cb };
+  registerAPI(path, descr, args, cb) {
+    this.apis[path] = { 
+      "f": cb,
+      descr,
+      args,
+     };
   }
 
   req(target, msg, options, cb) {
@@ -197,9 +201,21 @@ class MQTTapi {
       });
     }.bind(this))
 
-    this.registerAPI("ping", (msg) => {
+    this.registerAPI("ping", "Ping", [], (msg) => {
       return { "pong": true };
     })
+
+    this.registerAPI("api", "Get API", [], (msg) => {
+      var ret=[]
+      console.log("apis",this.apis);
+      for (var c of Object.keys(this.apis)) {
+        ret.push({
+          cmd: c,
+        })
+      }
+      return ret;
+    })
+
     setInterval(() => {
       for (var k in this.reqs) {
         var r = this.reqs[k]
