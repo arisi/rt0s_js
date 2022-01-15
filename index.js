@@ -116,6 +116,12 @@ class MQTTapi {
             r.cb(null, obj.reply)
         }
       })
+
+      this.reply = (msg, data) => {
+        msg['reply'] = data
+        this.publish(`/up/${msg['src']}/${msg['mid']}`, msg)
+      }
+
       this.subscribe(`/dn/${this._id}/+`, (topic, msg) => {
         if (msg['req']['args'][0] in this.apis) {
           var api = this.apis[msg['req']['args'][0]];
