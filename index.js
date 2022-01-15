@@ -128,7 +128,6 @@ class MQTTapi {
 
           var reply = api['f'](msg);
           if (reply == null) {
-            console.log("api will reply later");
             return;
           }
           msg['reply'] = reply;
@@ -188,7 +187,6 @@ class MQTTapi {
     })
 
     this._client.on('connect', function() {
-      console.log("connected!");
       change_state(true);
       ctx.broadcast("state", { "state": "online", "stamp": MQTTapi.stamp() }, { retain: true, qos: 2 });
       do_subs()
