@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
 const readline = require('readline');
-const rt0s = require('./index.js');
+const fs = require("fs")
+
+if (fs.existsSync('./index.js'))
+  rt0s = require('./index.js');
+else
+  rt0s = require('rt0s_js.js');
 
 var mq = new rt0s('ws://mqtt.mq11.net:1993', "", 'demo', "demo");
-
 
 if (process.argv.length > 2) {
   var args = process.argv.splice(2)
