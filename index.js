@@ -234,7 +234,7 @@ class MQTTapi {
         'cb': cb,
       }
       console.log("req_ind subs:", key, this.req_inds[key]);
-      this.client.subscribe(this.req_inds[key]['path'])
+      this._client.subscribe(this.req_inds[key]['path'])
     }
 
     this.registerAPI("ping", "Ping", [], (msg) => {
