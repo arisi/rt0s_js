@@ -1,6 +1,6 @@
 {
   "name": "rt0s_js",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "rt0s js client library",
   "main": "index.js",
   "scripts": {
