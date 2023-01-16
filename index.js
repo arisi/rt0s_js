@@ -35,7 +35,7 @@ class MQTTapi {
   }
 
   registerAPI(path, descr, args, cb) {
-    this.apis[path] = { 
+    this.apis[path] = {
       "f": cb,
       descr,
       args,
@@ -79,6 +79,7 @@ class MQTTapi {
     this.sublist = {};
     this.apis = {};
     this.reqs = {};
+    this.req_inds = {};
     this.onChangeState = false;
 
     var _client = mqtt.connect(url, {
@@ -100,7 +101,7 @@ class MQTTapi {
     function sleep (time) {
       return new Promise((resolve) => setTimeout(resolve, time));
     }
-    
+
     var do_subs = () => {
 
       this.subscribe("/bc/+/+", (topic, msg) => {
@@ -156,7 +157,7 @@ class MQTTapi {
         console.log("double off -- logout ");
         return;
       }
-        
+
       if (this.connected == newstate)
         return
       this.connected = newstate
@@ -193,6 +194,16 @@ class MQTTapi {
     })
 
     _client.on('message', function(topic, msg) {
+      Object.keys(this.req_inds).forEach(ind => {
+        if (match(this.req_inds[ind]['path'], topic)) {
+          var obj = JSON.parse(msg.toString());
+          var p = topic.split("/");
+          obj.device =  p[2]
+          obj.indication = p[3]
+          obj.received = Rt0s.stamp();
+          this.req_inds[ind]['cb'](this.req_inds[ind], obj);
+        }
+      });
       Object.keys(this.sublist).forEach(sub => {
         if (match(sub, topic)) {
           try {
@@ -204,6 +215,27 @@ class MQTTapi {
         }
       });
     }.bind(this))
+
+    this.send_ind = (path, obj, options = {}) => {
+      try {
+        this.client.publish(`/ind/${this._cid}/${path}`, JSON.stringify(obj), options);
+      } catch (error) {
+        console.error('ERR broadcast:', error);
+      }
+    };
+
+    this.req_ind = (src, topic, cb) => {
+      var key = src+"_"+topic
+      this.req_inds[key] = {
+        'src': src,
+        'topic': topic,
+        'key': key,
+        'path': "/ind/"+src+"/"+topic,
+        'cb': cb,
+      }
+      console.log("req_ind subs:", key, this.req_inds[key]);
+      this.client.subscribe(this.req_inds[key]['path'])
+    }
 
     this.registerAPI("ping", "Ping", [], (msg) => {
       return { "pong": true };
