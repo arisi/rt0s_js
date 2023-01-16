@@ -200,7 +200,7 @@ class MQTTapi {
           var p = topic.split("/");
           obj.device =  p[2]
           obj.indication = p[3]
-          obj.received = Rt0s.stamp();
+          obj.received = MQTTapi.stamp();
           this.req_inds[ind]['cb'](this.req_inds[ind], obj);
         }
       });
