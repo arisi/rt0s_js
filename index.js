@@ -56,7 +56,7 @@ class MQTTapi {
       'created': MQTTapi.stamp(),
       'sent': MQTTapi.stamp(),
       'tries': 1,
-      'retries': "retries" in options ? options.tries : 5,
+      'retries': "retries" in options ? options.retries : 5,
       'timeout': "timeout" in options ? options.timeout : 3000
     };
     this.publish(`/dn/${target}/${obj['mid']}`, obj);
@@ -243,7 +243,6 @@ class MQTTapi {
 
     this.registerAPI("api", "Get API", [], (msg) => {
       var ret=[]
-      console.log("apis",this.apis);
       for (var c of Object.keys(this.apis)) {
         ret.push({
           cmd: c,
