@@ -233,7 +233,7 @@ class MQTTapi {
         'path': "/ind/"+src+"/"+topic,
         'cb': cb,
       }
-      console.log("req_ind subs:", key, this.req_inds[key]);
+      //console.log("req_ind subs:", key, this.req_inds[key]);
       this._client.subscribe(this.req_inds[key]['path'])
     }
 
