@@ -34,6 +34,16 @@ class MQTTapi {
     }.bind(this))
   }
 
+  unsubscribe(topic, cb) {
+    this._client.unsubscribe(topic, function(err) {
+      if (err) {
+        console.error("ERR unsubscribe:", err);
+      } else {
+        delete this.sublist[topic];
+      }
+    }.bind(this))
+  }
+
   registerAPI(path, descr, args, cb) {
     this.apis[path] = {
       "f": cb,
@@ -235,6 +245,10 @@ class MQTTapi {
       }
       //console.log("req_ind subs:", key, this.req_inds[key]);
       this._client.subscribe(this.req_inds[key]['path'])
+    }
+
+    this.unreq_ind = (src, topic) => {
+      this._client.unsubscribe("/ind/"+src+"/"+topic)
     }
 
     this.registerAPI("ping", "Ping", [], (msg) => {
