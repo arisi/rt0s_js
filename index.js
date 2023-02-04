@@ -113,7 +113,6 @@ class MQTTapi {
         //console.log("bc:", topic, msg);
       })
 
-
       this.subscribe(`/up/${this._id}/+`, (topic, obj) => {
         if (obj['mid'] in this.reqs) {
           var r = this.reqs[obj['mid']]
@@ -190,7 +189,10 @@ class MQTTapi {
     })
     this._client.on('offline', function(err) {
       console.error("offline");
-      change_state(false);
+      //change_state(false);
+      this._client.end(true, {}, () => {
+        this._client.reconnect();
+      })
     })
 
     this._client.on('connect', function() {
