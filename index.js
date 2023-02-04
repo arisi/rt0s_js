@@ -93,12 +93,7 @@ class MQTTapi {
     this.onChangeState = false;
 
     var _client = mqtt.connect(url, {
-      will: {
-        topic: `/bc/${this._id}/state`,
-        payload: '{"state": "off"}',
-        qos: 2,
-        retain: true
-      },
+      connectTimeout: 4000,
       reconnectPeriod: 1000,
       clean: true,
       username: uid,
