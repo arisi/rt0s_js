@@ -159,7 +159,8 @@ class MQTTapi {
     }
 
     this._client.on('error', function(err) {
-      console.error("err..");
+      console.error("MQTT broker connection error...", err);
+      change_state(false);
     })
 
     var change_state = this.change_state = (newstate) => {
