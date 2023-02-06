@@ -52,6 +52,15 @@ class MQTTapi {
      };
   }
 
+  registerSyncAPI(path, descr, args, cb) {
+    this.apis[path] = {
+      "f": cb,
+      'sync': true,
+      descr,
+      args,
+     };
+  }
+
   req(target, msg, options, cb) {
     var obj = {
       'mid': uuid.v4(),
@@ -127,15 +136,19 @@ class MQTTapi {
         this.publish(`/up/${msg['src']}/${msg['mid']}`, msg)
       }
 
-      this.subscribe(`/dn/${this._id}/+`, (topic, msg) => {
+      this.subscribe(`/dn/${this._id}/+`, async (topic, msg) => {
         if (msg['req']['args'][0] in this.apis) {
           var api = this.apis[msg['req']['args'][0]];
-
-          var reply = api['f'](msg);
-          if (reply == null) {
-            return;
+          if (api.sync) {
+            var reply = await api['f'](msg);
+            msg['reply'] = reply;
+          } else {
+            var reply = api['f'](msg);
+            if (reply == null) {
+              return;
+            }
+            msg['reply'] = reply;
           }
-          msg['reply'] = reply;
         } else if ("*" in this.apis) {
           var api = this.apis["*"];
           var reply = api['f'](msg);
@@ -189,10 +202,7 @@ class MQTTapi {
     })
     this._client.on('offline', function(err) {
       console.error("offline");
-      //change_state(false);
-      this._client.end(true, {}, () => {
-        this._client.reconnect();
-      })
+      change_state(false);
     })
 
     this._client.on('connect', function() {
