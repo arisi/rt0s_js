@@ -1,5 +1,5 @@
 {
-  "name": "rt0s_js",
+  "name": "@rt0s/rt0s_js",
   "version": "1.1.14",
   "description": "rt0s js client library",
   "main": "index.js",
