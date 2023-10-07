@@ -3,13 +3,17 @@
   "version": "1.1.14",
   "description": "rt0s js client library",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arisi/rt0s_js.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
     "rt0s": "./rt0s_cli.js"
   },
-  "author": "Ari Siitonen@rt0s.com",
+  "author": "jalopuuverstas@gmail.com",
   "license": "ISC",
   "dependencies": {
     "mqtt": "^4.2.6",
