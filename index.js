@@ -81,6 +81,19 @@ class MQTTapi {
     this.publish(`/dn/${target}/${obj['mid']}`, obj);
   }
 
+  req_sync(target, msg, options = {}) {
+    return new Promise((ok, err) => {
+      this.req(target, msg, options, (error, ret) => {
+        if (error)
+          err(error)
+        else if (ret.error)
+          err(ret.error)
+        else
+          ok(ret)
+      })
+    })
+  }
+
   end() {
     this._client.end();
     this.change_state(false)
