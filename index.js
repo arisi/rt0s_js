@@ -3,6 +3,8 @@ const uuid = require('uuid');
 const match = require('mqtt-match');
 
 class MQTTapi {
+  conf = {};
+  onConfig = undefined;
 
   static stamp() {
     return (new Date).getTime();
@@ -25,7 +27,7 @@ class MQTTapi {
   }
 
   subscribe(topic, cb) {
-    this._client.subscribe(topic, function(err) {
+    this._client.subscribe(topic, function (err) {
       if (err) {
         console.error("ERR subscribe:", err);
       } else {
@@ -35,7 +37,7 @@ class MQTTapi {
   }
 
   unsubscribe(topic, cb) {
-    this._client.unsubscribe(topic, function(err) {
+    this._client.unsubscribe(topic, function (err) {
       if (err) {
         console.error("ERR unsubscribe:", err);
       } else {
@@ -49,7 +51,7 @@ class MQTTapi {
       "f": cb,
       descr,
       args,
-     };
+    };
   }
 
   registerSyncAPI(path, descr, args, cb) {
@@ -58,7 +60,7 @@ class MQTTapi {
       'sync': true,
       descr,
       args,
-     };
+    };
   }
 
   req(target, msg, options, cb) {
@@ -125,15 +127,11 @@ class MQTTapi {
 
     this._client = _client;
 
-    function sleep (time) {
+    function sleep(time) {
       return new Promise((resolve) => setTimeout(resolve, time));
     }
 
     var do_subs = () => {
-
-      this.subscribe("/bc/+/+", (topic, msg) => {
-        //console.log("bc:", topic, msg);
-      })
 
       this.subscribe(`/up/${this._id}/+`, (topic, obj) => {
         if (obj['mid'] in this.reqs) {
@@ -178,13 +176,13 @@ class MQTTapi {
       });
     }
 
-    this._client.on('error', function(err) {
+    this._client.on('error', function (err) {
       console.error("MQTT broker connection error...", err);
       change_state(false);
     })
 
     var change_state = this.change_state = (newstate) => {
-      if (this.connected == newstate && newstate==false) {
+      if (this.connected == newstate && newstate == false) {
         console.log("double fail... ");
         //return;
       }
@@ -209,27 +207,27 @@ class MQTTapi {
       }
     }
 
-    this._client.on('disconnect', function(err) {
+    this._client.on('disconnect', function (err) {
       console.error("disconnected");
       change_state(false);
     })
-    this._client.on('offline', function(err) {
+    this._client.on('offline', function (err) {
       console.error("offline");
       change_state(false);
     })
 
-    this._client.on('connect', function() {
+    this._client.on('connect', function () {
       change_state(true);
       ctx.broadcast("state", { "state": "online", "stamp": MQTTapi.stamp() }, { retain: true, qos: 2 });
       do_subs()
     })
 
-    _client.on('message', function(topic, msg) {
+    _client.on('message', function (topic, msg) {
       Object.keys(this.req_inds).forEach(ind => {
         if (match(this.req_inds[ind]['path'], topic)) {
           var obj = JSON.parse(msg.toString());
           var p = topic.split("/");
-          obj.device =  p[2]
+          obj.device = p[2]
           obj.indication = p[3]
           obj.received = MQTTapi.stamp();
           this.req_inds[ind]['cb'](this.req_inds[ind], obj);
@@ -256,31 +254,38 @@ class MQTTapi {
     };
 
     this.req_ind = (src, topic, cb) => {
-      var key = src+"_"+topic
+      var key = src + "_" + topic
       this.req_inds[key] = {
         'src': src,
         'topic': topic,
         'key': key,
-        'path': "/ind/"+src+"/"+topic,
+        'path': "/ind/" + src + "/" + topic,
         'cb': cb,
       }
-      //console.log("req_ind subs:", key, this.req_inds[key]);
       this._client.subscribe(this.req_inds[key]['path'])
     }
 
     this.unreq_ind = (src, topic) => {
       var key = src + "_" + topic
-      //console.log("unreq_ind subs:", key, this.req_inds[key]);
       delete this.req_inds[key]
-      this._client.unsubscribe("/ind/"+src+"/"+topic)
+      this._client.unsubscribe("/ind/" + src + "/" + topic)
     }
+
+    this.req_ind("config_service", "+", (_a, c) => {
+      if (c.is_config) {
+        if (this.onConfig)
+          this.onConfig(c.indication)
+        this.conf[c.indication] = c.json;
+      }
+    })
+
 
     this.registerAPI("ping", "Ping", [], (msg) => {
       return { "pong": true };
     })
 
     this.registerAPI("api", "Get API", [], (msg) => {
-      var ret=[]
+      var ret = []
       for (var c of Object.keys(this.apis)) {
         ret.push({
           cmd: c,
