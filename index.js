@@ -273,9 +273,13 @@ class MQTTapi {
 
     this.req_ind("config_service", "+", (_a, c) => {
       if (c.is_config) {
-        if (this.onConfig)
-          this.onConfig(c.indication)
-        this.conf[c.indication] = c.json;
+        var new_config = JSON.stringify(c.json)
+        var old_config = JSON.stringify(this.conf[c.indication])
+        if (old_config != new_config) {
+          this.conf[c.indication] = c.json;
+          if (this.onConfig)
+            this.onConfig(c.indication)
+        }
       }
     })
 
