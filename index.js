@@ -5,6 +5,7 @@ const match = require('mqtt-match');
 class MQTTapi {
   conf = {};
   onConfig = undefined;
+  do_send_apis = false;
 
   static stamp() {
     return (new Date).getTime();
@@ -52,6 +53,7 @@ class MQTTapi {
       descr,
       args,
     };
+    this.do_send_apis = true;
   }
 
   registerSyncAPI(path, descr, args, cb) {
@@ -61,6 +63,7 @@ class MQTTapi {
       descr,
       args,
     };
+    this.do_send_apis = true;
   }
 
   req(target, msg, options, cb) {
@@ -283,6 +286,17 @@ class MQTTapi {
       }
     })
 
+    this.send_apis = () => {
+      var ret = []
+      for (var c of Object.keys(this.apis)) {
+        ret.push({
+          cmd: c,
+          descr: this.apis[c].descr,
+          args: this.apis[c].args,
+        })
+      }
+      this.publish(`/ind/${this.id}/api`, { topic: 'api', api: ret })
+    }
 
     this.registerAPI("ping", "Ping", [], (msg) => {
       return { "pong": true };
@@ -318,6 +332,10 @@ class MQTTapi {
             r.done = true;
           }
         }
+      }
+      if (this.do_send_apis) {
+        this.send_apis();
+        this.do_send_apis = false;
       }
     }, 100);
   }
